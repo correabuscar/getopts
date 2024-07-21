@@ -886,6 +886,67 @@ impl OptGroup {
 }
 
 impl Matches {
+    /// returns a new vector of all specified args to the program minus the ones passed as args to this function
+    pub fn whats_left(&self, short_names_to_remove: &[char], long_names_to_remove: &[&str]) -> Vec<&str>
+    {
+        assert_eq!(self.vals.len(), self.opts.len());
+        let mut retained_opts: Vec<&str> = Vec::new();
+        for i in 0..self.vals.len() {
+            let val=&self.vals[i];
+            if !val.is_empty() {
+                let opt=&self.opts[i];
+                match &opt.name {
+                    Name::Long(ref long_name) => {
+                        if !long_names_to_remove.contains(&long_name.as_str()) {
+                            //retain it if the short also says to retain
+                            // Check if all aliases' short names are not in `short_names_to_remove`
+                            let all_aliases_ok = opt.aliases.iter().all(|alias| {
+                                match &alias.name {
+                                    Name::Short(short_name) => !short_names_to_remove.contains(&short_name),
+                                    Name::Long(_) => {
+                                        unreachable!("for long name '{}'", long_name)
+                                    },
+                                }
+                            });
+                            if all_aliases_ok {
+                                retained_opts.push(long_name.as_str());
+                            }
+                        }
+                    },
+                    Name::Short(ref short_name) => {
+                        unreachable!("for short name '{}'", short_name);
+                    },
+                }//match opt
+            }//if empty
+        }//for
+        retained_opts
+
+//        let mut non_empty_opts: Vec<_> = self.vals.iter()
+//            .zip(self.opts.iter())
+//            .filter(|(val, _)| !val.is_empty())
+//            .map(|(_, &ref opt)| opt)
+//            .collect();
+//        non_empty_opts.retain(|opt| {
+//            match &opt.name {
+//                Name::Long(name) => {
+//                    let retain=!long_names_to_remove.contains(&name.as_str());
+//                    if retain {
+//                        //if the long name isn't in the list to remove, check the short name
+//                        opt.aliases.iter().any(|each| {
+//                            match &each.name {
+//                                Name::Short(name) => !short_names_to_remove.contains(&name),
+//                                Name::Long(name) => unreachable!("for '{}'", name),
+//                            }
+//                        })
+//                    } else {
+//                        retain
+//                    }
+//                },
+//                _ => unreachable!(),
+//            }
+//        });
+//        non_empty_opts
+    }
     fn opt_vals(&self, nm: &str) -> Vec<(usize, Optval)> {
         match find_opt(&self.opts, &Name::from_str(nm)) {
             Some(id) => self.vals[id].clone(),
