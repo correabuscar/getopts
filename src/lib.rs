@@ -450,7 +450,7 @@ impl Options {
             .map(|i| {
                 i.as_ref()
                     .to_str()
-                    .ok_or_else(|| Fail::UnrecognizedOption(format!("{:?}", i.as_ref())))
+                    .ok_or_else(|| Fail::UnrecognizedOption(format!("{:?}, can't transform that non-utf8 sequence into UTF8!", i.as_ref())))
                     .map(|s| s.to_owned())
             })
             .collect::<::std::result::Result<Vec<_>, _>>()?;
